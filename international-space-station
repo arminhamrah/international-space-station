@@ -1,0 +1,64 @@
+import requests
+import math
+from math import radians, sin, cos, asin, sqrt
+
+def ISS_now():
+    # Get the current latitude and longitude of the International Space Station (ISS)
+    url = "http://api.open-notify.org/iss-now.json"  
+    result = requests.get(url)
+    d = result.json()
+    lat = float(d['iss_position']['latitude'])
+    long = float(d['iss_position']['longitude'])
+    return lat, long
+
+def ISS_distance(lat1, long1):
+    #Calculates the distance and direction from a given location to the ISS.
+    lat2, long2 = ISS_now()
+
+    total_distance = haversine(lat1, long1, lat2, long2)
+    vert_dist = vertical_distance(lat1, lat2)
+    horz_dist = horizontal_distance(long1, long2, (lat1 + lat2) / 2)
+
+    direction_ns = "north" if lat2 > lat1 else "south"
+    direction_ew = "east" if long2 > long1 else "west"
+
+    return f"You are {total_distance:.2f} miles away from the ISS: {abs(vert_dist):.2f} miles {direction_ns} and {abs(horz_dist):.2f} miles {direction_ew}."
+
+def haversine(lat1, long1, lat2, long2):
+    #Calculates the great circle distance in miles between two points on the earth.
+    long1, lat1, long2, lat2 = map(radians, [long1, lat1, long2, lat2])
+    dlong = long2 - long1
+    dlat = lat2 - lat1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlong/2)**2
+    c = 2 * asin(sqrt(a))
+    r = 3958.8
+    return c * r
+
+def vertical_distance(lat1, lat2):
+    #Calculates the vertical distance between two latitudes.
+    R = 3958.8
+    dlat = radians(lat2 - lat1)
+    return R * dlat
+
+def horizontal_distance(lon1, lon2, lat):
+    #Calculates the horizontal distance between two longitudes at a given latitude.
+    R = 3958.8
+    dlon = radians(lon2 - lon1)
+    return R * dlon * cos(radians(lat))
+
+def main():
+    print("ISS Tracker and Distance Calculator")
+    print("———————————————————————————————————")
+    
+    iss_lat, iss_long = ISS_now()
+    print(f"Current ISS Position: Latitude = {iss_lat:.4f}, Longitude = {iss_long:.4f}")
+    
+    user_lat = float(input("Enter your latitude: "))
+    user_long = float(input("Enter your longitude: "))
+    
+    distance_info = ISS_distance(user_lat, user_long)
+    print("\nDistance to ISS:")
+    print(distance_info)
+
+if __name__ == "__main__":
+    main()
